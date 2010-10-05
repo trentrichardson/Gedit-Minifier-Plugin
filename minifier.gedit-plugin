@@ -1,0 +1,10 @@
+[Gedit Plugin]
+Loader=python
+Module=minifier
+IAge=2
+Name=Minifier
+Description=Plugin to minify js and css
+Authors=Trent Richardson
+Copyright=Copyright © 2010 Trent Richardson
+Website=http://trentrichardson.com
+Icon=gtk-convert
