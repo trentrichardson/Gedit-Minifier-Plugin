@@ -60,7 +60,7 @@ class MinifierWindowHelper:
 		self._action_group = gtk.ActionGroup("MinifierPluginActions")
 		self._action_group.add_actions([
 		("MinifierJS", None, _("Minify JS"), "<Ctrl>U", _("Minify JS"), self.on_minifier_js_activate),
-		("MinifierCSS", None, _("Minify CSS"), "<Ctrl>I", _("Minify CSS"), self.on_minifier_css_activate)
+		("MinifierCSS", None, _("Minify CSS"), "<Ctrl><Alt>U", _("Minify CSS"), self.on_minifier_css_activate)
 		])
 		
 		manager.insert_action_group(self._action_group, -1)
