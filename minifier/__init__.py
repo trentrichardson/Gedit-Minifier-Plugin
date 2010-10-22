@@ -22,6 +22,7 @@ import gtk
 import gedit
 import os
 import re
+import gzip
 
 ui_str = """<ui>
 	<menubar name="MenuBar">
@@ -30,6 +31,7 @@ ui_str = """<ui>
 				<separator name="MinifierSeparator1"/>
 				<menuitem name="MinifierJS" action="MinifierJS"/>
 				<menuitem name="MinifierCSS" action="MinifierCSS"/>
+				<menuitem name="MinifierGzip" action="MinifierGzip"/>
 			</placeholder>
 		</menu>
 	</menubar>
@@ -60,7 +62,8 @@ class MinifierWindowHelper:
 		self._action_group = gtk.ActionGroup("MinifierPluginActions")
 		self._action_group.add_actions([
 		("MinifierJS", None, _("Minify JS"), "<Ctrl>U", _("Minify JS"), self.on_minifier_js_activate),
-		("MinifierCSS", None, _("Minify CSS"), "<Ctrl><Alt>U", _("Minify CSS"), self.on_minifier_css_activate)
+		("MinifierCSS", None, _("Minify CSS"), "<Ctrl><Shift>U", _("Minify CSS"), self.on_minifier_css_activate),
+		("MinifierGzip", None, _("Gzip Current File"), "<Ctrl><Alt>U", _("Gzip Current File"), self.on_minifier_gzip_activate)
 		])
 		
 		manager.insert_action_group(self._action_group, -1)
@@ -105,6 +108,31 @@ class MinifierWindowHelper:
 		md.run()
 		md.destroy()
 	
+	# gzip button click
+	def on_minifier_gzip_activate(self, action):
+		doc = self._window.get_active_document()
+		if not doc:
+			return
+		
+		docuri = doc.get_uri_for_display()
+		doctxt = doc.get_text(doc.get_iter_at_line(0), doc.get_end_iter())
+			
+		try:			
+			f = gzip.open(docuri + '.gz', 'wb')
+			f.write(doctxt)
+			f.close()
+			f = None
+			
+			msg = "Gzipped as: \n"+ docuri + ".gz"
+			md = gtk.MessageDialog(type=gtk.MESSAGE_INFO, buttons=gtk.BUTTONS_CLOSE, flags=gtk.DIALOG_MODAL, message_format=msg )
+			md.run()
+			md.destroy()
+		except err:
+			md = gtk.MessageDialog(type=gtk.MESSAGE_INFO, buttons=gtk.BUTTONS_CLOSE, flags=gtk.DIALOG_MODAL, message_format="Unable to gzip.." )
+			md.run()
+			md.destroy()
+
+
 	# the guts of how to minify js
 	def get_minified_js_str(self, js):
 		ins = StringIO(js)
