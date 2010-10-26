@@ -24,17 +24,19 @@ import os
 import re
 import gzip
 
-ui_str = """<ui>
-	<menubar name="MenuBar">
-		<menu name="ToolsMenu" action="Tools">
-			<placeholder name="ToolsOps_2">
-				<separator name="MinifierSeparator1"/>
-				<menuitem name="MinifierJS" action="MinifierJS"/>
-				<menuitem name="MinifierCSS" action="MinifierCSS"/>
-				<menuitem name="MinifierGzip" action="MinifierGzip"/>
-			</placeholder>
-		</menu>
-	</menubar>
+ui_str = """
+<ui>
+  <menubar name="MenuBar">
+    <menu name="ToolsMenu" action="Tools">
+      <placeholder name="ToolsOps_2">
+        <menu name="MenifierMenu" action="MinifierMenuAction">
+			<menuitem name="MinifierJS" action="MinifierJS"/>
+			<menuitem name="MinifierCSS" action="MinifierCSS"/>
+			<menuitem name="MinifierGzip" action="MinifierGzip"/>
+        </menu>
+      </placeholder>
+    </menu>
+  </menubar>
 </ui>
 """
 
@@ -61,6 +63,7 @@ class MinifierWindowHelper:
 		# Create a new action group
 		self._action_group = gtk.ActionGroup("MinifierPluginActions")
 		self._action_group.add_actions([
+		("MinifierMenuAction", None, _("Minifier"), None, _("Minifier Tools"), None),
 		("MinifierJS", None, _("Minify JS"), "<Ctrl>U", _("Minify JS"), self.on_minifier_js_activate),
 		("MinifierCSS", None, _("Minify CSS"), "<Ctrl><Shift>U", _("Minify CSS"), self.on_minifier_css_activate),
 		("MinifierGzip", None, _("Gzip Current File"), "<Ctrl><Alt>U", _("Gzip Current File"), self.on_minifier_gzip_activate)
@@ -115,22 +118,27 @@ class MinifierWindowHelper:
 			return
 		
 		docuri = doc.get_uri_for_display()
+		docfilename = doc.get_short_name_for_display()
 		doctxt = doc.get_text(doc.get_iter_at_line(0), doc.get_end_iter())
+		docfilenamegz = docfilename + '.gz'
+		
+		dialog = gtk.FileChooserDialog(title=None,action=gtk.FILE_CHOOSER_ACTION_SAVE,buttons=(gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL,gtk.STOCK_SAVE,gtk.RESPONSE_OK))
+		dialog.set_do_overwrite_confirmation(True)
+		dialog.set_current_folder(os.path.split(docuri)[0])
+		dialog.set_current_name(docfilenamegz)
+		dialog.set_default_response(gtk.RESPONSE_OK)
+		
+		response = dialog.run()
+		
+		if response == gtk.RESPONSE_OK:
+			newgzuri = dialog.get_filename()
 			
-		try:			
-			f = gzip.open(docuri + '.gz', 'wb')
+			f = gzip.open(newgzuri, 'wb')
 			f.write(doctxt)
 			f.close()
 			f = None
-			
-			msg = "Gzipped as: \n"+ docuri + ".gz"
-			md = gtk.MessageDialog(type=gtk.MESSAGE_INFO, buttons=gtk.BUTTONS_CLOSE, flags=gtk.DIALOG_MODAL, message_format=msg )
-			md.run()
-			md.destroy()
-		except err:
-			md = gtk.MessageDialog(type=gtk.MESSAGE_INFO, buttons=gtk.BUTTONS_CLOSE, flags=gtk.DIALOG_MODAL, message_format="Unable to gzip.." )
-			md.run()
-			md.destroy()
+		
+		dialog.destroy()
 
 
 	# the guts of how to minify js
